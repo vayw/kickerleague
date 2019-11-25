@@ -16,7 +16,9 @@ type Matches struct {
 }
 
 type MatchData struct {
-	ID       int `gorm:"primary_key;AUTO_INCREMENT"`
+	ID       int     `gorm:"primary_key;AUTO_INCREMENT"`
+	Players  Players `gorm:"foreignkey:PlayerID"`
+	PlayerID int
 	Position string
 	Team     string
 	Matches  Matches `gorm:"foreignkey:MatchID"`
