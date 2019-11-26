@@ -2,12 +2,12 @@ package models
 
 import "time"
 
-type Players struct {
+type Player struct {
 	ID   int `gorm:"primary_key;AUTO_INCREMENT"`
 	Name string
 }
 
-type Matches struct {
+type Match struct {
 	ID         int `gorm:"primary_key;AUTO_INCREMENT"`
 	Red_score  int
 	Blue_score int
@@ -16,19 +16,19 @@ type Matches struct {
 }
 
 type MatchData struct {
-	ID       int     `gorm:"primary_key;AUTO_INCREMENT"`
-	Players  Players `gorm:"foreignkey:PlayerID"`
+	ID       int    `gorm:"primary_key;AUTO_INCREMENT"`
+	Player   Player `gorm:"foreignkey:PlayerID"`
 	PlayerID int
 	Position string
 	Team     string
-	Matches  Matches `gorm:"foreignkey:MatchID"`
+	Match    Match `gorm:"foreignkey:MatchID"`
 	MatchID  int
 }
 
-type Goals struct {
-	ID       int     `gorm:"primary_key;AUTO_INCREMENT"`
-	Players  Players `gorm:"foreignkey:PlayerID"`
+type Goal struct {
+	ID       int    `gorm:"primary_key;AUTO_INCREMENT"`
+	Player   Player `gorm:"foreignkey:PlayerID"`
 	PlayerID int
-	Matches  Matches `gorm:"foreignkey:MatchID"`
+	Match    Match `gorm:"foreignkey:MatchID"`
 	MatchID  int
 }

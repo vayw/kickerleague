@@ -6,5 +6,5 @@ import (
 )
 
 func Migrate() {
-	database.DBCon.AutoMigrate(models.Players{}, models.Matches{}, models.MatchData{}, models.Goals{})
+	database.DBCon.AutoMigrate(models.Player{}, models.Match{}, models.MatchData{}, models.Goal{})
 }

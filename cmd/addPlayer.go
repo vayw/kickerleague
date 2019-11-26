@@ -18,8 +18,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/vayw/kickerleague/database"
-	"github.com/vayw/kickerleague/models"
+	"github.com/vayw/kickerleague/player"
 )
 
 // addPlayerCmd represents the addPlayer command
@@ -27,11 +26,10 @@ var addPlayerCmd = &cobra.Command{
 	Use:   "addPlayer <name>",
 	Short: "add player",
 	Run: func(cmd *cobra.Command, args []string) {
-		player := models.Players{Name: args[0]}
-		database.InitDB()
-		defer database.DBCon.Close()
-		database.DBCon.Create(&player)
-		fmt.Println("success")
+		_, err := player.AddPlayer(args[0])
+		if err == nil {
+			fmt.Println("success")
+		}
 	},
 }
 
