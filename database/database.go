@@ -6,7 +6,7 @@ var (
 	DBCon *gorm.DB
 )
 
-func InitDB() {
+func ConnectDB() {
 	var err error
 
 	DBCon, err = gorm.Open("sqlite3", "kicker.db")

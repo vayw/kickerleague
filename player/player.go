@@ -9,11 +9,10 @@ import (
 
 func AddPlayer(name string) (models.Player, error) {
 	player := models.Player{Name: name}
-	database.InitDB()
+	database.ConnectDB()
 	defer database.DBCon.Close()
 
-	if database.DBCon.NewRecord(player) {
-		database.DBCon.Create(&player)
+	if err := database.DBCon.Create(&player).Error; err == nil {
 		return player, nil
 	} else {
 		return models.Player{}, errors.New("player already exists")

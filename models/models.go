@@ -3,8 +3,8 @@ package models
 import "time"
 
 type Player struct {
-	ID   int `gorm:"primary_key;AUTO_INCREMENT"`
-	Name string
+	ID   int    `gorm:"primary_key;AUTO_INCREMENT"`
+	Name string `gorm:"unique;not null"`
 }
 
 type Match struct {

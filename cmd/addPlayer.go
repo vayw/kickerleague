@@ -26,9 +26,11 @@ var addPlayerCmd = &cobra.Command{
 	Use:   "addPlayer <name>",
 	Short: "add player",
 	Run: func(cmd *cobra.Command, args []string) {
-		_, err := player.AddPlayer(args[0])
+		player, err := player.AddPlayer(args[0])
 		if err == nil {
-			fmt.Println("success")
+			fmt.Printf("success! Player ID is %d\n", player.ID)
+		} else {
+			fmt.Println(err)
 		}
 	},
 }
