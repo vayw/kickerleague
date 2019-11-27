@@ -25,6 +25,7 @@ import (
 var addPlayerCmd = &cobra.Command{
 	Use:   "addPlayer <name>",
 	Short: "add player",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		player, err := player.AddPlayer(args[0])
 		if err == nil {
