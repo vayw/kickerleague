@@ -2,18 +2,22 @@ package game
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/vayw/kickerleague/database"
 	"github.com/vayw/kickerleague/models"
 )
 
 type MatchInfo struct {
-	Match models.Match
-	RD    models.MatchData
-	RF    models.MatchData
-	BD    models.MatchData
-	BF    models.MatchData
-	Goals []Goal
+	Match  models.Match
+	Lineup LineUp
+	Goals  []MGoal
+	TS     time.Time
+}
+
+type MGoal struct {
+	TS     time.Time
+	Scorer int
 }
 
 type Positions struct {
@@ -26,7 +30,7 @@ type LineUp struct {
 	Blue Positions
 }
 
-func NewMatch(positions Positions) (models.Match, error) {
+func NewMatch(lineup Positions) (string, error) {
 	database.ConnectDB()
 	defer database.DBCon.Close()
 
@@ -35,7 +39,7 @@ func NewMatch(positions Positions) (models.Match, error) {
 
 	for _, t := range []string{"Red", "Blue"} {
 		for _, p := range []string{"Defender", "Forward"} {
-			res := db.Where(&models.Player{Name: positions[t][p]}).First(&temp_player)
+			res := db.Where(&models.Player{Name: lineup[t][p]}).First(&temp_player)
 			if res.Error == nil {
 				match[p] = models.MatchData{PlayerID: temp_player["ID"], Position: p, Team: t}
 			} else {
@@ -44,6 +48,5 @@ func NewMatch(positions Positions) (models.Match, error) {
 		}
 	}
 
-	//match = models.Match{Red_score: 0, Blue_score: 0, Winner: "None", TS: time.Unix(1e9, 0).UTC()}
-	//return match nil
+	return "3482", nil
 }
