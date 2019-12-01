@@ -8,45 +8,96 @@ import (
 	"github.com/vayw/kickerleague/models"
 )
 
-type MatchInfo struct {
-	Match  models.Match
-	Lineup LineUp
-	Goals  []MGoal
-	TS     time.Time
+type Player struct {
+	Team     string
+	Position string
 }
 
-type MGoal struct {
-	TS     time.Time
-	Scorer int
+type Result struct {
+	Red    int
+	Blue   int
+	Winner string
 }
 
-type Positions struct {
-	Defender string
-	Forward  string
+func NewMatch(lineup map[int]Player) (int, error) {
+	match := models.Match{Red_score: 0, Blue_score: 0, Winner: "None", TS: time.Now()}
+	database.ConnectDB()
+	defer database.DBCon.Close()
+	tx := database.DBCon.Begin()
+
+	var matchid int
+	if err := tx.Create(&match).Error; err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+	matchid = match.ID
+
+	for pid, position := range lineup {
+		matchdata := models.MatchData{PlayerID: pid, Position: position.Position, Team: position.Team, MatchID: matchid}
+		if err := tx.Create(&matchdata).Error; err != nil {
+			tx.Rollback()
+			return 0, err
+		}
+	}
+	tx.Commit()
+	return matchid, nil
 }
 
-type LineUp struct {
-	Red  Positions
-	Blue Positions
+func Score(scorer int, matchid int) error {
+	goal := models.Goal{PlayerID: scorer, MatchID: matchid, TS: time.Now()}
+	database.ConnectDB()
+	defer database.DBCon.Close()
+	if err := database.DBCon.Create(&goal).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
-func NewMatch(lineup Positions) (string, error) {
+func EndMatch(matchid int) (Result, error) {
+	var match models.Match
+
 	database.ConnectDB()
 	defer database.DBCon.Close()
 
-	var temp_player models.Player
-	var match MatchInfo
+	if err := database.DBCon.First(&match, matchid).Error; err != nil {
+		return Result{}, err
+	}
 
-	for _, t := range []string{"Red", "Blue"} {
-		for _, p := range []string{"Defender", "Forward"} {
-			res := db.Where(&models.Player{Name: lineup[t][p]}).First(&temp_player)
-			if res.Error == nil {
-				match[p] = models.MatchData{PlayerID: temp_player["ID"], Position: p, Team: t}
-			} else {
-				fmt.Println(res.Error)
-			}
+	var red_score int
+	var blue_score int
+	var winner string
+
+	rows, err := database.DBCon.Table("goals").Select("match_data.team").Joins("inner join match_data on match_data.player_id = goals.player_id").Where("goals.match_id = ?", match.ID).Rows()
+	if err != nil {
+		return Result{}, err
+	}
+	for rows.Next() {
+		var team string
+		if err := rows.Scan(&team); err != nil {
+			fmt.Println(err)
+		}
+		switch team {
+		case "red", "Red":
+			red_score += 1
+		case "blue", "Blue":
+			blue_score += 1
 		}
 	}
 
-	return "3482", nil
+	switch {
+	case red_score > blue_score:
+		winner = "red"
+	case red_score < blue_score:
+		winner = "blue"
+	default:
+		winner = "draw"
+	}
+
+	match.Red_score = red_score
+	match.Blue_score = blue_score
+	match.Winner = winner
+	database.DBCon.Save(&match)
+
+	res := Result{red_score, blue_score, winner}
+	return res, err
 }

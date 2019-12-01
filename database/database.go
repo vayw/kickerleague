@@ -1,6 +1,9 @@
 package database
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
+)
 
 var (
 	DBCon *gorm.DB
@@ -14,5 +17,4 @@ func ConnectDB() {
 	if err != nil {
 		panic("failed to connect database")
 	}
-
 }

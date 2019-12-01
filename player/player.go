@@ -15,6 +15,11 @@ func AddPlayer(name string) (models.Player, error) {
 	if err := database.DBCon.Create(&player).Error; err == nil {
 		return player, nil
 	} else {
-		return models.Player{}, errors.New("player already exists")
+		switch err.Error() {
+		case "UNIQUE constraint failed: players.name":
+			return models.Player{}, errors.New("player already exists")
+		default:
+			return models.Player{}, err
+		}
 	}
 }
