@@ -10,6 +10,7 @@ import (
 
 func Server(addr string) {
 	router := gin.Default()
+
 	router.GET("/api/players", func(c *gin.Context) {
 		list, _ := player.PlayerList()
 		c.JSON(200, list)
