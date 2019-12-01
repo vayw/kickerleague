@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,8 +10,9 @@ import (
 )
 
 type Player struct {
-	Team     string
-	Position string
+	ID       int    `json:"id"`
+	Team     string `json:"team"`
+	Position string `json:"position"`
 }
 
 type Result struct {
@@ -19,8 +21,11 @@ type Result struct {
 	Winner string
 }
 
-func NewMatch(lineup map[int]Player) (int, error) {
+func NewMatch(lineup []Player) (int, error) {
 	match := models.Match{Red_score: 0, Blue_score: 0, Winner: "None", TS: time.Now()}
+	if len(lineup) != 4 {
+		return 0, errors.New("you must provide 4 players")
+	}
 	database.ConnectDB()
 	defer database.DBCon.Close()
 	tx := database.DBCon.Begin()
@@ -32,8 +37,8 @@ func NewMatch(lineup map[int]Player) (int, error) {
 	}
 	matchid = match.ID
 
-	for pid, position := range lineup {
-		matchdata := models.MatchData{PlayerID: pid, Position: position.Position, Team: position.Team, MatchID: matchid}
+	for _, i := range lineup {
+		matchdata := models.MatchData{PlayerID: i.ID, Position: i.Position, Team: i.Team, MatchID: matchid}
 		if err := tx.Create(&matchdata).Error; err != nil {
 			tx.Rollback()
 			return 0, err
@@ -67,7 +72,7 @@ func EndMatch(matchid int) (Result, error) {
 	var blue_score int
 	var winner string
 
-	rows, err := database.DBCon.Table("goals").Select("match_data.team").Joins("inner join match_data on match_data.player_id = goals.player_id").Where("goals.match_id = ?", match.ID).Rows()
+	rows, err := database.DBCon.Table("goals").Select("match_data.team").Joins("inner join match_data on match_data.player_id = goals.player_id and match_data.match_id = goals.match_id").Where("goals.match_id = ?", match.ID).Rows()
 	if err != nil {
 		return Result{}, err
 	}

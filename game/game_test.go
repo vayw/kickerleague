@@ -30,11 +30,12 @@ func TestNewMatch(t *testing.T) {
 	if err := initMatch(); err != nil {
 		t.Error(err)
 	}
-	lineup := make(map[int]Player)
-	lineup[1] = Player{"Red", "Defender"}
-	lineup[2] = Player{"Red", "Forward"}
-	lineup[3] = Player{"Blue", "Defender"}
-	lineup[4] = Player{"Blue", "Forward"}
+	lineup := []Player{
+		Player{1, "Red", "Defender"},
+		Player{2, "Red", "Forward"},
+		Player{3, "Blue", "Defender"},
+		Player{4, "Blue", "Forward"},
+	}
 	_, err := NewMatch(lineup)
 	if err != nil {
 		t.Error(err)
@@ -46,11 +47,12 @@ func TestScore(t *testing.T) {
 	if err := initMatch(); err != nil {
 		t.Error(err)
 	}
-	lineup := make(map[int]Player)
-	lineup[1] = Player{"Red", "Defender"}
-	lineup[2] = Player{"Red", "Forward"}
-	lineup[3] = Player{"Blue", "Defender"}
-	lineup[4] = Player{"Blue", "Forward"}
+	lineup := []Player{
+		Player{1, "Red", "Defender"},
+		Player{2, "Red", "Forward"},
+		Player{3, "Blue", "Defender"},
+		Player{4, "Blue", "Forward"},
+	}
 	mid, err := NewMatch(lineup)
 	if err != nil {
 		t.Error(err)
@@ -65,11 +67,12 @@ func TestEndMatch(t *testing.T) {
 	if err := initMatch(); err != nil {
 		t.Error(err)
 	}
-	lineup := make(map[int]Player)
-	lineup[1] = Player{"Red", "Defender"}
-	lineup[2] = Player{"Red", "Forward"}
-	lineup[3] = Player{"Blue", "Defender"}
-	lineup[4] = Player{"Blue", "Forward"}
+	lineup := []Player{
+		Player{1, "Red", "Defender"},
+		Player{2, "Red", "Forward"},
+		Player{3, "Blue", "Defender"},
+		Player{4, "Blue", "Forward"},
+	}
 
 	mid, err := NewMatch(lineup)
 	if err != nil {
@@ -88,5 +91,4 @@ func TestEndMatch(t *testing.T) {
 	if res.Red != 2 || res.Blue != 5 || res.Winner != "blue" {
 		t.Error(res)
 	}
-
 }
