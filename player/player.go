@@ -23,3 +23,13 @@ func AddPlayer(name string) (models.Player, error) {
 		}
 	}
 }
+
+func PlayerList() ([]models.Player, error) {
+	database.ConnectDB()
+	defer database.DBCon.Close()
+
+	var Players []models.Player
+	database.DBCon.Find(&Players)
+
+	return Players, nil
+}
