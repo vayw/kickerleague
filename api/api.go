@@ -1,33 +1,62 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/vayw/kickerleague/game"
 	"github.com/vayw/kickerleague/player"
 )
 
 func Server(addr string) {
 	router := gin.Default()
+
 	router.GET("/api/players", func(c *gin.Context) {
 		list, _ := player.PlayerList()
 		c.JSON(200, list)
 	})
 
 	router.POST("/api/match/start", func(c *gin.Context) {
-		//var lineup map[int]game.Player
-		type R struct {
-			cmd string
+		type Data struct {
+			Lineup []game.Player `json:"lineup" binding:"required"`
 		}
-		var q R
-		c.BindJSON(&q)
-		fmt.Println(q)
+		var data Data
+		c.BindJSON(&data)
+		matchid, err := game.NewMatch(data.Lineup)
+		if err != nil {
+			c.JSON(418, gin.H{"matchid": 0, "err": "error"})
+		} else {
+			c.JSON(201, gin.H{"matchid": matchid, "err": "nil"})
+		}
 	})
 
 	router.POST("/api/match/end", func(c *gin.Context) {
-		list, _ := player.PlayerList()
-		c.JSON(200, list)
+		type data struct {
+			MatchID int `json:"matchid" binding:"required"`
+		}
+		var payload data
+		c.BindJSON(&payload)
+		res, err := game.EndMatch(payload.MatchID)
+		if err == nil {
+			c.JSON(200, res)
+		} else {
+			c.JSON(418, gin.H{"err": "it's not over, baby"})
+		}
+	})
+
+	router.POST("/api/match/score", func(c *gin.Context) {
+		type data struct {
+			PID     int `json:"pid" binding:"required"`
+			MatchID int `json:"matchid" binding:"required"`
+		}
+		var payload data
+		c.BindJSON(&payload)
+		err := game.Score(payload.PID, payload.MatchID)
+		if err != nil {
+			c.JSON(418, gin.H{"err": "something went wrong"})
+		} else {
+			c.JSON(200, gin.H{"err": "nil"})
+		}
 	})
 
 	http.ListenAndServe(addr, router)
