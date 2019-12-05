@@ -24,7 +24,7 @@ func Server(addr string) {
 		c.BindJSON(&data)
 		matchid, err := game.NewMatch(data.Lineup)
 		if err != nil {
-			c.JSON(418, gin.H{"matchid": 0, "err": "error"})
+			c.JSON(201, gin.H{"matchid": 0, "err": err.Error()})
 		} else {
 			c.JSON(201, gin.H{"matchid": matchid, "err": "nil"})
 		}
@@ -40,7 +40,7 @@ func Server(addr string) {
 		if err == nil {
 			c.JSON(200, res)
 		} else {
-			c.JSON(418, gin.H{"err": "it's not over, baby"})
+			c.JSON(201, gin.H{"err": "it's not over, baby"})
 		}
 	})
 
@@ -53,7 +53,7 @@ func Server(addr string) {
 		c.BindJSON(&payload)
 		err := game.Score(payload.PID, payload.MatchID)
 		if err != nil {
-			c.JSON(418, gin.H{"err": "something went wrong"})
+			c.JSON(200, gin.H{"err": err.Error()})
 		} else {
 			c.JSON(200, gin.H{"err": "nil"})
 		}

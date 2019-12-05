@@ -26,6 +26,16 @@ func NewMatch(lineup []Player) (int, error) {
 	if len(lineup) != 4 {
 		return 0, errors.New("you must provide 4 players")
 	}
+
+	m := make(map[int]bool)
+	for _, i := range lineup {
+		if _, ok := m[i.ID]; !ok {
+			m[i.ID] = true
+		} else {
+			return 0, errors.New("there should not be the same player more than once")
+		}
+	}
+
 	database.ConnectDB()
 	defer database.DBCon.Close()
 	tx := database.DBCon.Begin()
