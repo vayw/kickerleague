@@ -13,7 +13,6 @@ import (
 func initMatch() error {
 	database.ConnectDB()
 	migrations.Migrate()
-	defer database.DBCon.Close()
 	pl := []string{"a", "b", "c", "d"}
 	for _, n := range pl {
 		_, err := player.AddPlayer(n)
@@ -40,7 +39,8 @@ func TestNewMatch(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	os.Remove("kicker.db")
+	defer database.DBCon.Close()
+	Clean()
 }
 
 func TestScore(t *testing.T) {
@@ -60,7 +60,8 @@ func TestScore(t *testing.T) {
 	if err := Score(1, mid); err != nil {
 		t.Error(err)
 	}
-	os.Remove("kicker.db")
+	defer database.DBCon.Close()
+	Clean()
 }
 
 func TestEndMatch(t *testing.T) {
@@ -87,8 +88,13 @@ func TestEndMatch(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	os.Remove("kicker.db")
+	defer database.DBCon.Close()
 	if res.Red != 2 || res.Blue != 5 || res.Winner != "blue" {
 		t.Error(res)
 	}
+	Clean()
+}
+
+func Clean() {
+	os.Remove("kicker.db")
 }

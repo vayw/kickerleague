@@ -36,8 +36,8 @@ func NewMatch(lineup []Player) (int, error) {
 		}
 	}
 
-	database.ConnectDB()
-	defer database.DBCon.Close()
+	//database.ConnectDB()
+	//defer database.DBCon.Close()
 	tx := database.DBCon.Begin()
 
 	var matchid int
@@ -60,8 +60,8 @@ func NewMatch(lineup []Player) (int, error) {
 
 func Score(scorer int, matchid int) error {
 	goal := models.Goal{PlayerID: scorer, MatchID: matchid, TS: time.Now()}
-	database.ConnectDB()
-	defer database.DBCon.Close()
+	//database.ConnectDB()
+	//defer database.DBCon.Close()
 	if err := database.DBCon.Create(&goal).Error; err != nil {
 		return err
 	}
@@ -71,8 +71,8 @@ func Score(scorer int, matchid int) error {
 func EndMatch(matchid int) (Result, error) {
 	var match models.Match
 
-	database.ConnectDB()
-	defer database.DBCon.Close()
+	//database.ConnectDB()
+	//defer database.DBCon.Close()
 
 	if err := database.DBCon.First(&match, matchid).Error; err != nil {
 		return Result{}, err

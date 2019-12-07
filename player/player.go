@@ -9,8 +9,6 @@ import (
 
 func AddPlayer(name string) (models.Player, error) {
 	player := models.Player{Name: name}
-	database.ConnectDB()
-	defer database.DBCon.Close()
 
 	if err := database.DBCon.Create(&player).Error; err == nil {
 		return player, nil
@@ -25,9 +23,6 @@ func AddPlayer(name string) (models.Player, error) {
 }
 
 func PlayerList() ([]models.Player, error) {
-	database.ConnectDB()
-	defer database.DBCon.Close()
-
 	var Players []models.Player
 	database.DBCon.Find(&Players)
 

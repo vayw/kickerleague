@@ -59,5 +59,7 @@ func Server(addr string) {
 		}
 	})
 
+	router.POST("/api/stats/matchresults", matchResults)
+
 	http.ListenAndServe(addr, router)
 }
