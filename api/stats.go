@@ -37,6 +37,15 @@ func matchResults(c *gin.Context) {
 			result[index].Lineup[pindex] = game.Player{j.PlayerID, j.Team, j.Position}
 		}
 	}
-
 	c.JSON(200, result)
+}
+
+func scorersTable(c *gin.Context) {
+	type Result struct {
+		Total int
+		Id    int `gorm:"column:player_id"`
+	}
+	var results []Result
+	database.DBCon.Table("goals").Select("player_id, count(*) as total").Group("player_id").Order("total desc").Scan(&results)
+	c.JSON(200, results)
 }

@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/vayw/kickerleague/game"
 	"github.com/vayw/kickerleague/player"
@@ -10,6 +11,7 @@ import (
 
 func Server(addr string) {
 	router := gin.Default()
+	router.Use(cors.Default())
 
 	router.GET("/api/players", func(c *gin.Context) {
 		list, _ := player.PlayerList()
@@ -60,6 +62,7 @@ func Server(addr string) {
 	})
 
 	router.POST("/api/stats/matchresults", matchResults)
+	router.POST("/api/stats/ratings/goals", scorersTable)
 
 	http.ListenAndServe(addr, router)
 }
