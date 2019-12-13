@@ -63,41 +63,72 @@ func overallStats(c *gin.Context) {
 	c.JSON(200, result)
 }
 
-func winRate(c *gin.Context) {
-	type Result struct {
-		Id      int
-		WinRate float32
-		Wins    int
-		Losses  int
-	}
+type Stat struct {
+	Id      int
+	WinRate float32
+	Wins    int
+	Losses  int
+}
 
+func winRate(c *gin.Context) {
 	type Data struct {
 		Player_id int
 		Winner    string
 		Team      string
+		Position  string
+	}
+
+	type Results struct {
+		Overall   []Stat
+		Forwards  []Stat
+		Defenders []Stat
 	}
 
 	var data []Data
-	var result []Result
 	win_map := make(map[int]int)
 	defeat_map := make(map[int]int)
+	forward_win_map := make(map[int]int)
+	forward_defeat_map := make(map[int]int)
+	defender_win_map := make(map[int]int)
+	defender_defeat_map := make(map[int]int)
 
-	database.DBCon.Table("match_data").Select("match_data.player_id, match_data.team, matches.winner").Joins("inner join matches on match_data.match_id = matches.id").Scan(&data)
+	database.DBCon.Table("match_data").Select("match_data.player_id, match_data.team, match_data.position, matches.winner").Joins("inner join matches on match_data.match_id = matches.id").Scan(&data)
 	for _, row := range data {
 		if row.Winner == row.Team {
 			win_map[row.Player_id] += 1
+			switch row.Position {
+			case "Forward":
+				forward_win_map[row.Player_id] += 1
+			case "Defender":
+				defender_win_map[row.Player_id] += 1
+			}
 		} else {
 			defeat_map[row.Player_id] += 1
+			switch row.Position {
+			case "Forward":
+				forward_defeat_map[row.Player_id] += 1
+			case "Defender":
+				defender_defeat_map[row.Player_id] += 1
+			}
 		}
 	}
 
-	for key, value := range win_map {
-		result = append(result, Result{key, float32(value) / float32(defeat_map[key]+value),
-			value, defeat_map[key]})
+	overall := CalcAndSort(win_map, defeat_map)
+	forwards := CalcAndSort(forward_win_map, forward_defeat_map)
+	defenders := CalcAndSort(defender_win_map, defender_defeat_map)
+
+	result := Results{overall, forwards, defenders}
+	c.JSON(200, result)
+}
+
+func CalcAndSort(wins map[int]int, defeats map[int]int) []Stat {
+	var result []Stat
+	for key, value := range wins {
+		result = append(result, Stat{key, float32(value) / float32(defeats[key]+value),
+			value, defeats[key]})
 	}
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].WinRate > result[j].WinRate
 	})
-
-	c.JSON(200, result)
+	return result
 }
