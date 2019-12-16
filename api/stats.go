@@ -2,6 +2,7 @@ package api
 
 import (
 	"sort"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/vayw/kickerleague/database"
@@ -9,15 +10,23 @@ import (
 	"github.com/vayw/kickerleague/models"
 )
 
+type Goal struct {
+	ID int `gorm:"column:player_id"`
+	Ts time.Time
+}
+
 func matchResults(c *gin.Context) {
 	type Data struct {
-		Num int `json:"num" binding:"required"`
+		Num  int `json:"num"`
+		From string
+		To   string
 	}
 
 	type Result struct {
 		Red    int
 		Blue   int
 		Lineup []game.Player
+		Goals  []Goal
 	}
 
 	var data Data
@@ -38,6 +47,7 @@ func matchResults(c *gin.Context) {
 		for pindex, j := range matchlineup {
 			result[index].Lineup[pindex] = game.Player{j.PlayerID, j.Team, j.Position}
 		}
+		database.DBCon.Table("goals").Select("player_id, ts").Where("match_id = ?", i.ID).Scan(&result[index].Goals)
 	}
 	c.JSON(200, result)
 }
