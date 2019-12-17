@@ -31,5 +31,6 @@ type Goal struct {
 	PlayerID int
 	Match    Match `gorm:"foreignkey:MatchID"`
 	MatchID  int
+	Auto     bool `gorm:"DEFAULT:false"`
 	TS       time.Time
 }

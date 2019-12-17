@@ -10,7 +10,7 @@ import (
 
 func TestAddPlayer(t *testing.T) {
 	database.ConnectDB()
-	migrations.Migrate()
+	migrations.Migrate(database.DBCon)
 	defer database.DBCon.Close()
 
 	_, err := AddPlayer("Obi-Van")

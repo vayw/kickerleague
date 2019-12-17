@@ -56,8 +56,8 @@ func NewMatch(lineup []Player) (int, error) {
 	return matchid, nil
 }
 
-func Score(scorer int, matchid int) error {
-	goal := models.Goal{PlayerID: scorer, MatchID: matchid, TS: time.Now()}
+func Score(scorer int, matchid int, auto bool) error {
+	goal := models.Goal{PlayerID: scorer, MatchID: matchid, Auto: auto, TS: time.Now()}
 	if err := database.DBCon.Create(&goal).Error; err != nil {
 		return err
 	}
@@ -75,20 +75,29 @@ func EndMatch(matchid int) (Result, error) {
 	var blue_score int
 	var winner string
 
-	rows, err := database.DBCon.Table("goals").Select("match_data.team").Joins("inner join match_data on match_data.player_id = goals.player_id and match_data.match_id = goals.match_id").Where("goals.match_id = ?", match.ID).Rows()
+	rows, err := database.DBCon.Table("goals").Select("goals.auto, match_data.team").Joins("inner join match_data on match_data.player_id = goals.player_id and match_data.match_id = goals.match_id").Where("goals.match_id = ?", match.ID).Rows()
 	if err != nil {
 		return Result{}, err
 	}
+	var team string
+	var auto bool
 	for rows.Next() {
-		var team string
-		if err := rows.Scan(&team); err != nil {
+		if err := rows.Scan(&auto, &team); err != nil {
 			fmt.Println(err)
 		}
 		switch team {
 		case "red", "Red":
-			red_score += 1
+			if !auto {
+				red_score += 1
+			} else {
+				blue_score += 1
+			}
 		case "blue", "Blue":
-			blue_score += 1
+			if !auto {
+				blue_score += 1
+			} else {
+				red_score += 1
+			}
 		}
 	}
 

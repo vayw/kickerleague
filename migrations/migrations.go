@@ -50,6 +50,18 @@ func Migrate(db *gorm.DB) error {
 				return tx.DropTable("player", "matches", "match_data", "goals").Error
 			},
 		},
+		{
+			ID: "autogoals",
+			Migrate: func(tx *gorm.DB) error {
+				type Goal struct {
+					Auto bool `gorm:"DEFAULT:false"`
+				}
+				return tx.AutoMigrate(Goal{}).Error
+			},
+			Rollback: func(tx *gorm.DB) error {
+				return tx.Table("goals").DropColumn("Auto").Error
+			},
+		},
 	})
 	return m.Migrate()
 }

@@ -17,6 +17,7 @@ vendor/
 
 # db
 *.db
+kicker.db*
 
 # swap files
 *.swp

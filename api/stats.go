@@ -11,8 +11,9 @@ import (
 )
 
 type Goal struct {
-	ID int `gorm:"column:player_id"`
-	Ts time.Time
+	ID   int `gorm:"column:player_id"`
+	Ts   time.Time
+	Auto bool
 }
 
 func matchResults(c *gin.Context) {
@@ -47,7 +48,7 @@ func matchResults(c *gin.Context) {
 		for pindex, j := range matchlineup {
 			result[index].Lineup[pindex] = game.Player{j.PlayerID, j.Team, j.Position}
 		}
-		database.DBCon.Table("goals").Select("player_id, ts").Where("match_id = ?", i.ID).Scan(&result[index].Goals)
+		database.DBCon.Table("goals").Select("player_id, auto, ts").Where("match_id = ?", i.ID).Scan(&result[index].Goals)
 	}
 	c.JSON(200, result)
 }
@@ -58,7 +59,7 @@ func scorersTable(c *gin.Context) {
 		Id    int `gorm:"column:player_id"`
 	}
 	var results []Result
-	database.DBCon.Table("goals").Select("player_id, count(*) as total").Group("player_id").Order("total desc").Scan(&results)
+	database.DBCon.Table("goals").Select("player_id, count(*) as total").Where("auto=false").Group("player_id").Order("total desc").Scan(&results)
 	c.JSON(200, results)
 }
 

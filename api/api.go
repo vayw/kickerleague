@@ -48,12 +48,13 @@ func Server(addr string) {
 
 	router.POST("/api/match/score", func(c *gin.Context) {
 		type data struct {
-			PID     int `json:"pid" binding:"required"`
-			MatchID int `json:"matchid" binding:"required"`
+			PID     int  `json:"pid" binding:"required"`
+			MatchID int  `json:"matchid" binding:"required"`
+			Auto    bool `json:"auto" binding:"required"`
 		}
 		var payload data
 		c.BindJSON(&payload)
-		err := game.Score(payload.PID, payload.MatchID)
+		err := game.Score(payload.PID, payload.MatchID, payload.Auto)
 		if err != nil {
 			c.JSON(200, gin.H{"err": err.Error()})
 		} else {
