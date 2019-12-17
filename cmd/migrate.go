@@ -26,8 +26,10 @@ var migrateCmd = &cobra.Command{
 	Short: "run database migrations",
 	Run: func(cmd *cobra.Command, args []string) {
 		database.ConnectDB()
-		migrations.Migrate()
 		defer database.DBCon.Close()
+		if err := migrations.Migrate(database.DBCon); err != nil {
+			panic(err.Error())
+		}
 	},
 }
 
