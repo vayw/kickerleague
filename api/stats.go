@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -16,6 +17,17 @@ type Goal struct {
 	Auto bool
 }
 
+type MResult struct {
+	Red    int
+	Blue   int
+	Lineup []game.Player
+	Goals  []Goal
+}
+
+type MR struct {
+	Result []MResult `json:"result"`
+}
+
 // matchResults example
 // @Summary Get match results
 // @Description get match results
@@ -23,20 +35,15 @@ type Goal struct {
 // @Accept  json
 // @Produce  json
 // @Param   num body int true "Number of match results"
-// @Success 200 {string} string	"ok"
+// @Param   from body string false "Start date"
+// @Param   to body string false "End date"
+// @Success 200 {object} MR
 // @Router /api/stats/matchresults [post]
 func matchResults(c *gin.Context) {
 	type Data struct {
-		Num  int `json:"num"`
-		From string
-		To   string
-	}
-
-	type Result struct {
-		Red    int
-		Blue   int
-		Lineup []game.Player
-		Goals  []Goal
+		Num  int    `json:"num"`
+		From string `json:"from"`
+		To   string `json:"to"`
 	}
 
 	var data Data
@@ -44,12 +51,12 @@ func matchResults(c *gin.Context) {
 
 	c.BindJSON(&data)
 
-	result := make([]Result, data.Num)
+	result := make([]MResult, data.Num)
 	database.DBCon.Limit(data.Num).Order("ts desc").Find(&matches)
 
 	var matchlineup []models.MatchData
 	for index, i := range matches {
-		result[index] = Result{}
+		result[index] = MResult{}
 		result[index].Red = i.Red_score
 		result[index].Blue = i.Blue_score
 		result[index].Lineup = make([]game.Player, 4)
@@ -59,7 +66,9 @@ func matchResults(c *gin.Context) {
 		}
 		database.DBCon.Table("goals").Select("player_id, auto, ts").Where("match_id = ?", i.ID).Scan(&result[index].Goals)
 	}
-	c.JSON(200, result)
+	r := MR{result}
+	fmt.Println(r)
+	c.JSON(200, r)
 }
 
 func scorersTable(c *gin.Context) {
