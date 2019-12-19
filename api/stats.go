@@ -16,6 +16,15 @@ type Goal struct {
 	Auto bool
 }
 
+// matchResults example
+// @Summary Get match results
+// @Description get match results
+// @ID match-results
+// @Accept  json
+// @Produce  json
+// @Param   num body int true "Number of match results"
+// @Success 200 {string} string	"ok"
+// @Router /api/stats/matchresults [post]
 func matchResults(c *gin.Context) {
 	type Data struct {
 		Num  int `json:"num"`
