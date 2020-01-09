@@ -21,3 +21,6 @@ kicker.db*
 
 # swap files
 *.swp
+
+# swagger generated files
+docs/

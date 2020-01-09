@@ -28,7 +28,6 @@ type MR struct {
 	Result []MResult `json:"result"`
 }
 
-// matchResults example
 // @Summary Get match results
 // @Description get match results
 // @ID match-results
@@ -71,13 +70,39 @@ func matchResults(c *gin.Context) {
 	c.JSON(200, r)
 }
 
+type Scorer struct {
+	Total int
+	Id    int `gorm:"column:player_id"`
+	Games int
+}
+
+type Scorers struct {
+	Result []Scorer `json:"result"`
+}
+
+// @Summary Get scorers table
+// @Description goals scored by each player with games count
+// @ID scorers-table
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} Scorers
+// @Router /api/stats/ratings/goals [post]
 func scorersTable(c *gin.Context) {
-	type Result struct {
-		Total int
-		Id    int `gorm:"column:player_id"`
+	var results Scorers
+	database.DBCon.Table("goals").Select("player_id, count(*) as total").Where("auto=false").Group("player_id").Order("total desc").Scan(&results.Result)
+	rows, _ := database.DBCon.Table("match_data").Select("count(*), player_id").Group("player_id").Rows()
+	var count int
+	var player_id int
+	for rows.Next() {
+		if err := rows.Scan(&count, &player_id); err != nil {
+			fmt.Println(err)
+		}
+		for ind, scorer := range results.Result {
+			if scorer.Id == player_id {
+				results.Result[ind].Games = count
+			}
+		}
 	}
-	var results []Result
-	database.DBCon.Table("goals").Select("player_id, count(*) as total").Where("auto=false").Group("player_id").Order("total desc").Scan(&results)
 	c.JSON(200, results)
 }
 
