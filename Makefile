@@ -2,7 +2,7 @@ all: build done
 
 build:
 		@echo "Building..."
-			@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w"
+			go build
 test:
 		@echo "Running tests..."
 			go test ./...

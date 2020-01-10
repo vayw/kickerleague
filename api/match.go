@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/vayw/kickerleague/game"
 )
@@ -40,7 +42,9 @@ func matchScore(c *gin.Context) {
 		Auto    bool `json:"auto" binding:"required"`
 	}
 	var payload data
-	c.BindJSON(&payload)
+	e := c.BindJSON(&payload)
+	fmt.Println(e.Error())
+	fmt.Println(payload)
 	err := game.Score(payload.PID, payload.MatchID, payload.Auto)
 	if err != nil {
 		c.JSON(200, gin.H{"err": err.Error()})

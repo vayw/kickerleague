@@ -66,7 +66,6 @@ func matchResults(c *gin.Context) {
 		database.DBCon.Table("goals").Select("player_id, auto, ts").Where("match_id = ?", i.ID).Scan(&result[index].Goals)
 	}
 	r := MR{result}
-	fmt.Println(r)
 	c.JSON(200, r)
 }
 
