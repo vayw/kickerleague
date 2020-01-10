@@ -37,17 +37,25 @@ func matchEnd(c *gin.Context) {
 
 func matchScore(c *gin.Context) {
 	type data struct {
-		PID     int  `json:"pid" binding:"required"`
-		MatchID int  `json:"matchid" binding:"required"`
-		Auto    bool `json:"auto" binding:"required"`
+		PID     int    `json:"pid" binding:"required"`
+		MatchID int    `json:"matchid" binding:"required"`
+		Auto    string `json:"auto" binding:"required"`
 	}
 	var payload data
 	e := c.BindJSON(&payload)
-	fmt.Println(e.Error())
-	fmt.Println(payload)
-	err := game.Score(payload.PID, payload.MatchID, payload.Auto)
-	if err != nil {
-		c.JSON(200, gin.H{"err": err.Error()})
+	if e != nil {
+		fmt.Println(e.Error())
+		fmt.Println(payload)
+	}
+	var scoreres error
+	switch payload.Auto {
+	case "True", "true", "TRUE":
+		scoreres = game.Score(payload.PID, payload.MatchID, true)
+	default:
+		scoreres = game.Score(payload.PID, payload.MatchID, false)
+	}
+	if scoreres != nil {
+		c.JSON(200, gin.H{"err": scoreres.Error()})
 	} else {
 		c.JSON(200, gin.H{"err": "nil"})
 	}
