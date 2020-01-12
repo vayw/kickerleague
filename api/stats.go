@@ -79,6 +79,7 @@ type Scorer struct {
 type Scorers struct {
 	Result   []Scorer `json:"result"`
 	Position string   `json:"position"`
+	Auto     bool     `json:"auto"`
 }
 
 // @Summary Get scorers table
@@ -89,6 +90,7 @@ type Scorers struct {
 // @Param   position body string false "position to search for"
 // @Param   from body string false "Start date"
 // @Param   to body string false "End date"
+// @Param   auto body string false "autogoals"
 // @Success 200 {object} Scorers
 // @Router /api/stats/ratings/goals [post]
 func scorersTable(c *gin.Context) {
@@ -96,6 +98,7 @@ func scorersTable(c *gin.Context) {
 		Position string `json:"position"`
 		From     string `json:"from"`
 		To       string `json:"to"`
+		Auto     string `json:"auto"`
 	}
 	var data Data
 	c.BindJSON(&data)
@@ -103,13 +106,23 @@ func scorersTable(c *gin.Context) {
 	var results Scorers
 	var rows *sql.Rows
 
+	var isauto bool
+	switch data.Auto {
+	case "True", "true":
+		isauto = true
+	default:
+		isauto = false
+	}
+	results.Position = data.Position
+	results.Auto = isauto
+
 	switch data.Position {
 	case "Defender", "Forward":
-		database.DBCon.Table("goals").Select("goals.player_id, count(*) as total").Joins("join match_data on match_data.match_id=goals.match_id and match_data.player_id = goals.player_id").Where("auto=false and position = ?", data.Position).Group("goals.player_id").Order("total desc").Scan(&results.Result)
-		rows, _ = database.DBCon.Table("match_data").Select("count(*), player_id").Where("position = ?", data.Position).Group("player_id").Rows()
+		database.DBCon.Table("goals").Select("goals.player_id, count(*) as total").Joins("join match_data on match_data.match_id=goals.match_id and match_data.player_id = goals.player_id").Where("auto=? and position=?", isauto, data.Position).Group("goals.player_id").Order("total desc").Scan(&results.Result)
+		rows, _ = database.DBCon.Table("match_data").Select("count(*), player_id").Where("position=?", data.Position).Group("player_id").Rows()
 	default:
 		data.Position = "overall"
-		database.DBCon.Table("goals").Select("player_id, count(*) as total").Where("auto=false").Group("player_id").Order("total desc").Scan(&results.Result)
+		database.DBCon.Table("goals").Select("player_id, count(*) as total").Where("auto=?", isauto).Group("player_id").Order("total desc").Scan(&results.Result)
 		rows, _ = database.DBCon.Table("match_data").Select("count(*), player_id").Group("player_id").Rows()
 	}
 	var count int
