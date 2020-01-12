@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
 	"sort"
 	"time"
@@ -76,7 +77,8 @@ type Scorer struct {
 }
 
 type Scorers struct {
-	Result []Scorer `json:"result"`
+	Result   []Scorer `json:"result"`
+	Position string   `json:"position"`
 }
 
 // @Summary Get scorers table
@@ -84,12 +86,32 @@ type Scorers struct {
 // @ID scorers-table
 // @Accept  json
 // @Produce  json
+// @Param   position body string false "position to search for"
+// @Param   from body string false "Start date"
+// @Param   to body string false "End date"
 // @Success 200 {object} Scorers
 // @Router /api/stats/ratings/goals [post]
 func scorersTable(c *gin.Context) {
+	type Data struct {
+		Position string `json:"position"`
+		From     string `json:"from"`
+		To       string `json:"to"`
+	}
+	var data Data
+	c.BindJSON(&data)
+
 	var results Scorers
-	database.DBCon.Table("goals").Select("player_id, count(*) as total").Where("auto=false").Group("player_id").Order("total desc").Scan(&results.Result)
-	rows, _ := database.DBCon.Table("match_data").Select("count(*), player_id").Group("player_id").Rows()
+	var rows *sql.Rows
+
+	switch data.Position {
+	case "Defender", "Forward":
+		database.DBCon.Table("goals").Select("goals.player_id, count(*) as total").Joins("join match_data on match_data.match_id=goals.match_id and match_data.player_id = goals.player_id").Where("auto=false and position = ?", data.Position).Group("goals.player_id").Order("total desc").Scan(&results.Result)
+		rows, _ = database.DBCon.Table("match_data").Select("count(*), player_id").Where("position = ?", data.Position).Group("player_id").Rows()
+	default:
+		data.Position = "overall"
+		database.DBCon.Table("goals").Select("player_id, count(*) as total").Where("auto=false").Group("player_id").Order("total desc").Scan(&results.Result)
+		rows, _ = database.DBCon.Table("match_data").Select("count(*), player_id").Group("player_id").Rows()
+	}
 	var count int
 	var player_id int
 	for rows.Next() {
@@ -105,12 +127,20 @@ func scorersTable(c *gin.Context) {
 	c.JSON(200, results)
 }
 
+type OverallResult struct {
+	Matches int
+	Goals   int
+}
+
+// @Summary Get overall stats
+// @Description overall count of matches and goals
+// @ID overall-stats
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} OverallResult
+// @Router /api/stats/overall [get]
 func overallStats(c *gin.Context) {
-	type Result struct {
-		Matches int
-		Goals   int
-	}
-	var result Result
+	var result OverallResult
 	database.DBCon.Table("matches").Select("count(*) as matches").Scan(&result)
 	database.DBCon.Table("goals").Select("count(*) as goals").Scan(&result)
 	c.JSON(200, result)
@@ -123,21 +153,29 @@ type Stat struct {
 	Losses  int
 }
 
+type wrData struct {
+	Player_id int
+	Winner    string
+	Team      string
+	Position  string
+}
+
+type wrResults struct {
+	Overall   []Stat
+	Forwards  []Stat
+	Defenders []Stat
+}
+
+// @Summary Get win rate stats
+// @Description overall, defenders, forwards winrate
+// @ID winrate-statss
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} wrResults
+// @Router /api/stats/winrate [get]
 func winRate(c *gin.Context) {
-	type Data struct {
-		Player_id int
-		Winner    string
-		Team      string
-		Position  string
-	}
 
-	type Results struct {
-		Overall   []Stat
-		Forwards  []Stat
-		Defenders []Stat
-	}
-
-	var data []Data
+	var data []wrData
 	win_map := make(map[int]int)
 	defeat_map := make(map[int]int)
 	forward_win_map := make(map[int]int)
@@ -170,7 +208,7 @@ func winRate(c *gin.Context) {
 	forwards := CalcAndSort(forward_win_map, forward_defeat_map)
 	defenders := CalcAndSort(defender_win_map, defender_defeat_map)
 
-	result := Results{overall, forwards, defenders}
+	result := wrResults{overall, forwards, defenders}
 	c.JSON(200, result)
 }
 
