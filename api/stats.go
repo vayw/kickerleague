@@ -236,3 +236,21 @@ func CalcAndSort(wins map[int]int, defeats map[int]int) []Stat {
 	})
 	return result
 }
+
+type pmData struct {
+}
+
+type pmResult struct {
+	Result []pmData
+}
+
+// @Summary Get player matches
+// @Description Return players list of matches
+// @ID players-matches
+// @Accept  json
+// @Produce  json
+// @Param   position body string false "position to search for"
+// @Param   from body string false "Start date"
+// @Param   to body string false "End date"
+// @Success 200 {object} pmResult
+// @Router /api/stats/player/matches [post]
