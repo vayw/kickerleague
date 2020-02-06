@@ -34,25 +34,57 @@ type MR struct {
 // @ID match-results
 // @Accept  json
 // @Produce  json
-// @Param   num body int true "Number of match results"
+// @Param   num body int false "Number of match results"
 // @Param   from body string false "Start date"
 // @Param   to body string false "End date"
+// @Param   id body string false "player id"
+// @Param   position body string false "position"
 // @Success 200 {object} MR
 // @Router /api/stats/matchresults [post]
 func matchResults(c *gin.Context) {
 	type Data struct {
-		Num  int    `json:"num"`
-		From string `json:"from"`
-		To   string `json:"to"`
+		Num      int    `json:"num"`
+		From     string `json:"from"`
+		To       string `json:"to"`
+		ID       string `json:"id"`
+		Position string `json:"position"`
 	}
 
 	var data Data
+	dojoin := false
 	var matches []models.Match
+	var query string
 
 	c.BindJSON(&data)
 
-	result := make([]MResult, data.Num)
-	database.DBCon.Limit(data.Num).Order("ts desc").Find(&matches)
+	if data.From != "" {
+		data.Num = -1
+		query = fmt.Sprintf("ts between '%s'", data.From)
+	} else {
+		query = fmt.Sprintf("ts between 0")
+	}
+	if data.To != "" {
+		data.Num = -1
+		query = fmt.Sprintf("%s and '%s'", query, data.To)
+	} else {
+		query = fmt.Sprintf("%s and strftime('%s','now')", query, "%Y-%m-%d %H:%M:%S")
+	}
+	if data.ID != "" {
+		dojoin = true
+		query = fmt.Sprintf("%s and match_data.player_id=%s", query, data.ID)
+		if data.Position != "" {
+			query = fmt.Sprintf("%s and match_data.position='%s'", query, data.Position)
+		}
+	}
+
+	fmt.Println(query)
+	if dojoin {
+		database.DBCon.Table("matches").Select("matches.id, red_score, blue_score, winner, matches.ts").Joins("join match_data on matches.id=match_data.match_id").Where(query).Order("ts desc").Limit(data.Num).Find(&matches)
+	} else {
+		database.DBCon.Table("matches").Select("id, red_score, blue_score, winner, ts").Where(query).Order("ts desc").Limit(data.Num).Find(&matches)
+	}
+
+	result := make([]MResult, len(matches))
 
 	var matchlineup []models.MatchData
 	for index, i := range matches {
@@ -236,21 +268,3 @@ func CalcAndSort(wins map[int]int, defeats map[int]int) []Stat {
 	})
 	return result
 }
-
-type pmData struct {
-}
-
-type pmResult struct {
-	Result []pmData
-}
-
-// @Summary Get player matches
-// @Description Return players list of matches
-// @ID players-matches
-// @Accept  json
-// @Produce  json
-// @Param   position body string false "position to search for"
-// @Param   from body string false "Start date"
-// @Param   to body string false "End date"
-// @Success 200 {object} pmResult
-// @Router /api/stats/player/matches [post]
